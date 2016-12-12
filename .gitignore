@@ -1,0 +1,5 @@
+#committing config will require force flag
+config.yml
+.vscode
+.DS_Store
+temp/*
