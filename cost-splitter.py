@@ -27,8 +27,7 @@ def get_last_month():
     # Minus one day to get the last day of last month
     last_month = first - datetime.timedelta(days=1)
     # Return YYYY-MM as a string
-    #return last_month.strftime("%Y-%m")
-    return "2016-09"
+    return last_month.strftime("%Y-%m")
 
 def unzip_file(folder, file_name, archive_path):
     """
@@ -41,6 +40,7 @@ def unzip_file(folder, file_name, archive_path):
     # Check the file is there
     if os.path.isfile(archive_path):
         # Unzip the file
+        print('Unzipping {}'.format(archive_path))
         zip_ref = zipfile.ZipFile(archive_path, 'r')
         zip_ref.extract(file_name, folder)
         zip_ref.close()
@@ -90,14 +90,11 @@ def split_cost(debug, row, search_indices, cost_index, reports, cost_split):
             cost_split["Free"] += cost
     return cost_split
 
-
-def main():
+def generate_metrics(config):
     """
-    Generate cost metrics
+    Generate the metrics
+    :param config: the loaded config file
     """
-    with open("config.yml", 'r') as yaml_file:
-        config = yaml.safe_load(yaml_file)
-
     start_time = time.time()
     # Get the file from s3
     file_name = "{}-{}.{}".format(config['file_pattern'], get_last_month(),
@@ -106,6 +103,7 @@ def main():
     archive_name = "{}.{}".format(file_name, "zip")
     archive_path = "{}/{}".format(config['save_folder'], archive_name)
     s3_client = boto3.client('s3')
+    print('Downloading: {}'.format(archive_name))
     s3_client.download_file(config['bucket_name'], archive_name, archive_path)
 
     if unzip_file(config['save_folder'], file_name, archive_path):
@@ -129,11 +127,12 @@ def main():
         count_total = 0
         cost_blended = 0.0
         cost_split = {}
+        print('Splitting costs')
         for report in config['reports']:
             title = list(report.keys())[0]
             cost_split[title] = 0.0
         cost_split["Shared"] = 0.0
-        if debug:
+        if config["debug"]:
             cost_split["Free"] = 0.0
         # Loop through and process the list
         for item in sortedlist:
@@ -148,15 +147,30 @@ def main():
 
         # Print the results
         total = cost_blended / 2
+        print('\n=============================\n')
         print("For the month of {}".format(get_last_month()))
         print("Total Cost: {}".format(round(total, 2)))
         for report in cost_split:
             cost = cost_split[report] / 2
             percent = (cost / total) * 100
-            print("{} cost is {}, {}% of the total".format(report, round(cost, 2), round(percent, 2)))
+            print("{} cost is {}, {}% of the total".format(report,
+                                                           round(cost, 2),
+                                                           round(percent, 2)))
         print("{} of {} records were relevant".format(count, count_total))
-
         print("completed in %s seconds" % round(time.time() - start_time))
+        print('\n=============================\n')
+def main():
+    """
+    Generate cost metrics
+    """
+    with open("config.yml", 'r') as yaml_file:
+        config = yaml.safe_load(yaml_file)
+    if config['bucket_name'] and \
+       config['file_pattern'] and \
+       config['linked_account_id']:
+        generate_metrics(config)
+    else:
+        print("Error: config.yml is poorly formed")
 
 if __name__ == "__main__":
     main()

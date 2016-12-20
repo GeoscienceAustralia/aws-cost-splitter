@@ -1,0 +1,27 @@
+# Config.yml
+# Define variables for use in the script 
+# Enabling debug mode will print a list of shared tags in the console
+debug: true
+# The name of the bucket that hosts your billing information
+bucket_name: 
+# The pattern of the detailed billing file_pattern
+# this should be in the format XXXXXXXXXXXX-aws-billing-detailed-line-items-with-resources-and-tags
+# The X's should be your billing account number, the year and month will be appended dynamically 
+file_pattern: 
+# The storage location of the downloaded csv.zip and csv file
+save_folder: ./temp
+# The account you wish to split
+linked_account_id: 
+# A list of columns you want to search for tags
+searchable_column: 
+    - ResourceId
+    - "user:Name"
+# A Report is defined by adding it to the reports sequence
+reports:
+    # The root item will be used as the report name in the printout
+    - Report1:
+        # A report can have one or more searchable tags
+        - tag1
+    - Report2:
+        - tag2
+        - tag3
