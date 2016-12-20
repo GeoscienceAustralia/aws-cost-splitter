@@ -27,8 +27,8 @@ def get_last_month():
     # Minus one day to get the last day of last month
     last_month = first - datetime.timedelta(days=1)
     # Return YYYY-MM as a string
-    return last_month.strftime("%Y-%m")
-
+    #return last_month.strftime("%Y-%m")
+    return "2016-09"
 
 def unzip_file(folder, file_name, archive_path):
     """
@@ -66,7 +66,7 @@ def split_cost(debug, row, search_indices, cost_index, reports, cost_split):
 
     # We only want the ones that aren't zero
     cost = float(row[cost_index])
-    if cost > 0.0:
+    if cost is not 0.0:
         for report in reports:
             title = list(report.keys())[0]
             tags = next(iter(report.values()))
@@ -80,8 +80,14 @@ def split_cost(debug, row, search_indices, cost_index, reports, cost_split):
         if debug:
             for index in search_indices:
                 if row[index]:
-                    print("{} - {}".format(index, row[index]))
+                    print("Shared : {} - {} $ {}".format(index, row[index], cost))
         cost_split["Shared"] += cost
+    else:
+        if debug:
+            for index in search_indices:
+                if row[index]:
+                    print("Free: {} - {} $ {}".format(index, row[index], cost))
+            cost_split["Free"] += cost
     return cost_split
 
 
@@ -127,6 +133,8 @@ def main():
             title = list(report.keys())[0]
             cost_split[title] = 0.0
         cost_split["Shared"] = 0.0
+        if debug:
+            cost_split["Free"] = 0.0
         # Loop through and process the list
         for item in sortedlist:
             count_total += 1
@@ -139,10 +147,13 @@ def main():
                 count += 1
 
         # Print the results
+        total = cost_blended / 2
         print("For the month of {}".format(get_last_month()))
-        print("Total Cost: {}".format(cost_blended / 2))
+        print("Total Cost: {}".format(round(total, 2)))
         for report in cost_split:
-            print("{} cost is {}".format(report, cost_split[report] / 2))
+            cost = cost_split[report] / 2
+            percent = (cost / total) * 100
+            print("{} cost is {}, {}% of the total".format(report, round(cost, 2), round(percent, 2)))
         print("{} of {} records were relevant".format(count, count_total))
 
         print("completed in %s seconds" % round(time.time() - start_time))
