@@ -2,6 +2,18 @@
 # Define variables for use in the script 
 # Enabling debug mode will print a list of shared tags in the console
 debug: true
+# Email Settings
+# Turn email on or off
+email: false
+# The email addresses to send the report to
+email_to: 
+    - 
+# The email address you wish to send from
+email_from: 
+# The password for the from account
+email_password: 
+# The smtp server you wish to connect to
+email_smtp: 
 # The name of the bucket that hosts your billing information
 bucket_name: 
 # The pattern of the detailed billing file_pattern

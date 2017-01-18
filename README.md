@@ -47,5 +47,5 @@ This repo uses pylint for style guide
 
 ## Roadmap
 1. ~~Create basic cost-splitting functionality~~
-2. Add email functionality
+2. ~~Add email functionality~~
 3. Modify script to be run as a lambda

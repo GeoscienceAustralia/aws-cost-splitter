@@ -11,6 +11,8 @@ import time
 import os.path
 import zipfile
 import yaml
+import smtplib
+from email.mime.text import MIMEText
 
 LINKED_ACCOUNT_HEADING = "LinkedAccountId"
 BLENDED_COST_HEADING = "BlendedCost"
@@ -145,20 +147,45 @@ def generate_metrics(config):
                                         cost_split)
                 count += 1
 
-        # Print the results
+        # Create Report
         total = cost_blended / 2
-        print('\n=============================\n')
-        print("For the month of {}".format(get_last_month()))
-        print("Total Cost: {}".format(round(total, 2)))
+        message = ''
+        message += ('\n=============================\n')
+        message += ("For the month of {}\r\n".format(get_last_month()))
+        message += ("Total Cost: {}\r\n".format(round(total, 2)))
         for report in cost_split:
             cost = cost_split[report] / 2
             percent = (cost / total) * 100
-            print("{} cost is {}, {}% of the total".format(report,
-                                                           round(cost, 2),
-                                                           round(percent, 2)))
-        print("{} of {} records were relevant".format(count, count_total))
-        print("completed in %s seconds" % round(time.time() - start_time))
-        print('\n=============================\n')
+            message += ("{} cost is {}, {}% of the total\r\n".format(report,
+                                                                     round(cost, 2),
+                                                                     round(percent, 2)))
+        if config['debug']:
+            message += ("{} of {} records were relevant\r\n".format(count, count_total))
+            message += ("completed in %s seconds\r\n" % round(time.time() - start_time))
+        message += ('\n=============================\n')
+
+        # Email or print the results
+        if config['email']:
+            # Format Email
+            email = MIMEText("")
+            email['From'] = config['email_from']
+            email['To'] = ', '.join(config['email_to'])
+            reports = ''
+            for report in cost_split:
+                reports += " - " + report
+            email['Subject'] = "AWS Billing Report" + reports
+            email['Message'] = message
+
+            # Send Email
+            server = smtplib.SMTP(config['email_smtp'])
+            server.starttls()
+            server.login(config['email_from'], config['email_password'])
+            server.sendmail(config['email_from'], config['email_to'], email.as_string())
+            server.close()
+            print('sent mail to ' + ''.join(config['email_to']))
+        else:
+            print(message)
+
 def main():
     """
     Generate cost metrics
